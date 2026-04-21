@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Описание типов данных
 export type UserRole = 'guest' | 'resident' | 'employee' | 'admin';
-export type EmployeeSubRole = 'maid' | 'valet' | 'bellman' | 'masseur' | 'chef' | 'waiter' | 'bartender' | 'reception' | 'admin';
 
 export interface User {
   id: string;
@@ -13,85 +11,54 @@ export interface User {
   password?: string;
   country: string;
   role: UserRole;
-  subRole?: EmployeeSubRole;
+  subRole?: string;
   balance: number;
   history: Array<{ id: number; date: string; item: string; price: number }>;
   room?: { number: string; type: string };
   services: string[];
+  pcHours: number;
+  parkingSpots: string[];
+  massageSessions: Array<{ staff: string; date: string; time: string }>;
 }
 
 interface AuthContextType {
   user: User | null;
-  register: (data: Omit<User, 'id' | 'role' | 'balance' | 'history' | 'services'>) => Promise<void>;
+  register: (data: any) => Promise<void>;
   login: (passport: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updatedUser: User) => Promise<void>;
-  refreshUserData: () => Promise<void>;
   isAuthorized: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_URL = 'http://localhost:3000/api/users';
+const API_URL = 'http://127.0.0.1:3000/api/users';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('db-active-user');
-    return saved ? JSON.parse(saved) : null;
+    try { return saved ? JSON.parse(saved) : null; } catch { return null; }
   });
 
-  useEffect(() => {
-    if (user) {
-      refreshUserData();
-    }
-  }, []);
-
-  const refreshUserData = async () => {
-    if (!user) return;
-    try {
-      const response = await fetch(`${API_URL}/${user.id}`);
-      if (response.ok) {
-        const freshData = await response.json();
-        setUser(freshData);
-        localStorage.setItem('db-active-user', JSON.stringify(freshData));
-      }
-    } catch (error) {
-      console.error("Ошибка синхронизации с бэкендом:", error);
-    }
-  };
-
-  // РЕГИСТРАЦИЯ
   const register = async (data: any) => {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-    } catch (error) {
-      console.error("Ошибка регистрации:", error);
-      throw error;
-    }
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
   };
 
-  // ВХОД
   const login = async (passport: string, password: string) => {
     try {
       const response = await fetch(API_URL);
       const users: User[] = await response.json();
-      
       const found = users.find(u => u.passport === passport && u.password === password);
-      
       if (found) {
         setUser(found);
         localStorage.setItem('db-active-user', JSON.stringify(found));
         return true;
       }
       return false;
-    } catch (error) {
-      console.error("Ошибка входа:", error);
-      return false;
-    }
+    } catch { return false; }
   };
 
   const logout = () => {
@@ -106,30 +73,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser),
       });
-
       if (response.ok) {
         const data = await response.json();
         setUser(data);
         localStorage.setItem('db-active-user', JSON.stringify(data));
       }
-    } catch (error) {
-      console.error("Ошибка обновления данных:", error);
-    }
+    } catch (error) { console.error(error); }
   };
 
-  const isAuthorized = user !== null;
-
   return (
-    <AuthContext.Provider value={{ user, register, login, logout, updateUser, refreshUserData, isAuthorized }}>
+    <AuthContext.Provider value={{ user, register, login, logout, updateUser, isAuthorized: user !== null }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
-}
+};

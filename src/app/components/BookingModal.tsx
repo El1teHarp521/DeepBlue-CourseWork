@@ -1,112 +1,143 @@
-import { X, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useState } from 'react';
+import { X, CheckCircle2, AlertCircle, CreditCard, Lock, Fingerprint } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 
-interface BookingModalProps {
-  title: string;
-  type: 'room' | 'service';
-  price?: number; // Теперь цена передается в модалку
-  onClose: () => void;
-}
+export function BookingModal({ title, type, price = 0, metadata, onClose }: any) {
+  const { user, updateUser } = useAuth();
+  const [step, setStep] = useState<'verify' | 'success'>('verify');
+  const [errorMsg, setErrorMsg] = useState('');
+  
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+  const [totalPrice, setTotalPrice] = useState(price);
 
-export function BookingModal({ title, type, price = 0, onClose }: BookingModalProps) {
-  const { user, isAuthorized, updateUser } = useAuth();
-  const [step, setStep] = useState<'form' | 'success' | 'error'>('form');
+  const [cardNum, setCardNum] = useState('');
+  const [cardExp, setCardExp] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [passInput, setPassInput] = useState('');
+  const [pinInput, setPinInput] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (type === 'room' && checkIn && checkOut) {
+      const days = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
+      setTotalPrice(price * (days > 0 ? days : 1));
+    } else { setTotalPrice(price); }
+  }, [checkIn, checkOut, price, type]);
+
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (passInput !== user?.passport) return setErrorMsg("ПАСПОРТ НЕ СОВПАДАЕТ");
+    if (pinInput !== user?.password) return setErrorMsg("НЕВЕРНЫЙ ПАРОЛЬ");
+    if (cardNum.length < 16) return setErrorMsg("НЕКОРРЕКТНАЯ КАРТА");
 
-    if (user.balance < price) {
-      setStep('error');
-      return;
+    const updatedUser = { ...user! };
+    
+    // ЛОГИКА ДОКУПКИ УСЛУГ
+    if (type === 'service') {
+        if (metadata.serviceId === 'gaming') updatedUser.pcHours += metadata.quantity;
+        else if (metadata.serviceId === 'parking') {
+            const start = Math.floor(Math.random() * 500) + 100;
+            const spots = Array.from({length: metadata.quantity}, (_, i) => `P-${start + i}`);
+            updatedUser.parkingSpots = [...(updatedUser.parkingSpots || []), ...spots];
+        } else if (metadata.itemName === 'МАССАЖ') {
+            updatedUser.massageSessions.push({ staff: metadata.staff, date: metadata.date, time: metadata.time });
+        }
+        updatedUser.services = [...new Set([...updatedUser.services, title.split(':')[0]])];
     }
 
-    // Списание средств и обновление истории
-    const updatedUser = {
-      ...user,
-      balance: user.balance - price,
-      history: [
-        { id: Date.now(), date: new Date().toISOString(), item: `Оплата: ${title}`, price: -price },
-        ...user.history
-      ],
-      // Если это комната, назначаем её пользователю
-      room: type === 'room' ? { number: (Math.floor(Math.random() * 500) + 100).toString(), type: title } : user.room
-    };
+    // ЛОГИКА БРОНИРОВАНИЯ НОМЕРА + НАЧИСЛЕНИЕ БОНУСОВ
+    if (type === 'room') {
+        const roomNum = (Math.floor(Math.random() * 100) + 300).toString();
+        updatedUser.room = { number: title.includes('ПЕНТХАУС') ? 'ПЕНТХАУС' : roomNum, type: title };
+        
+        const bonuses: any = {
+            'СТАНДАРТ': { s: ['БАССЕЙН'], pc: 2 },
+            'БИЗНЕС': { s: ['БАССЕЙН', 'ЗАВТРАК'], pc: 8 },
+            'ЛЮКС': { s: ['БАССЕЙН + БАНИ', 'ПОЛНЫЙ ПАНСИОН'], pc: 12 },
+            'ПЕНТХАУС': { s: ['ВСЕ ВКЛЮЧЕНО', 'ПАРКОВКА', 'ТЕРРАСА'], pc: 42 }
+        };
 
-    updateUser(updatedUser);
+        const currentBonuses = bonuses[title.toUpperCase()];
+        if (currentBonuses) {
+            updatedUser.pcHours += currentBonuses.pc;
+            updatedUser.services = [...new Set([...updatedUser.services, ...currentBonuses.s])];
+            if (title.toUpperCase() === 'ПЕНТХАУС') updatedUser.parkingSpots.push('VIP-01');
+        }
+    }
+
+    // Транзакция в истории (Зашли и вышли)
+    updatedUser.history = [
+        { id: Date.now() + 1, date: new Date().toISOString(), item: `ОПЛАТА: ${title.toUpperCase()}`, price: -totalPrice },
+        { id: Date.now(), date: new Date().toISOString(), item: `ВНЕСЕНИЕ СРЕДСТВ (КАРТА)`, price: totalPrice },
+        ...updatedUser.history
+    ];
+
+    await updateUser(updatedUser);
+
+    if (type === 'room' || type === 'service') {
+        await fetch('http://127.0.0.1:3000/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guestName: user?.fullName, roomNumber: updatedUser.room?.number || '—', roomType: title, checkIn: checkIn || '—', checkOut: checkOut || '—', status: 'active' })
+        });
+    }
+
     setStep('success');
-    
-    // Добавляем в общее расписание
-    const savedBookings = JSON.parse(localStorage.getItem('deep-blue-bookings') || '[]');
-    const newBooking = {
-        id: Date.now(),
-        guestName: user.fullName,
-        roomNumber: updatedUser.room?.number || '—',
-        roomType: title,
-        checkIn: new Date().toISOString(),
-        checkOut: new Date(Date.now() + 86400000 * 3).toISOString(),
-        status: 'upcoming'
-    };
-    localStorage.setItem('deep-blue-bookings', JSON.stringify([...savedBookings, newBooking]));
   };
 
-  if (step === 'success') {
-    return (
-      <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-card p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-in zoom-in">
-          <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/20">
-            <CheckCircle2 className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-2xl font-black uppercase mb-2">Оплачено!</h2>
-          <p className="text-muted-foreground mb-6">Средства списаны с вашего баланса. Приятного отдыха!</p>
-          <Button onClick={onClose} className="w-full">Отлично</Button>
-        </div>
+  if (step === 'success') return (
+    <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center p-4 font-sans text-white">
+      <div className="bg-[#0a0a0a] p-20 border border-white/10 text-center space-y-10 shadow-2xl">
+        <CheckCircle2 size={100} className="text-green-500 mx-auto" />
+        <h2 className="text-5xl font-black uppercase tracking-widest">УСПЕШНО</h2>
+        <p className="font-black uppercase opacity-40 text-xs tracking-[0.4em]">УСЛУГИ ДОБАВЛЕНЫ В ВАШ ПРОФИЛЬ</p>
+        <button onClick={onClose} className="w-full bg-white text-black py-6 font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">ЗАКРЫТЬ</button>
       </div>
-    );
-  }
-
-  if (step === 'error') {
-    return (
-      <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-card p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-in zoom-in">
-          <div className="w-20 h-20 bg-destructive rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-destructive/20">
-            <AlertCircle className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-2xl font-black uppercase mb-2">Ошибка</h2>
-          <p className="text-muted-foreground mb-6">Недостаточно средств на балансе. Пополните его в профиле.</p>
-          <Button onClick={onClose} variant="secondary" className="w-full">Понятно</Button>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-border" onClick={e => e.stopPropagation()}>
-        <div className="p-6 bg-secondary/30 flex justify-between items-center border-b border-border">
-          <h2 className="text-xl font-black uppercase tracking-tighter">{type === 'room' ? 'Бронирование' : 'Заказ услуги'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full"><X className="w-4 h-4" /></button>
+    <div className="fixed inset-0 z-[150] bg-black/95 flex items-center justify-center p-4 text-white font-sans overflow-y-auto">
+      <div className="bg-[#0a0a0a] w-full max-w-5xl border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-300">
+        <div className="p-10 border-b border-white/10 flex justify-between items-center bg-white/5">
+            <h2 className="font-black uppercase tracking-[0.5em] text-2xl">БАНКОВСКИЙ ТЕРМИНАЛ</h2>
+            <button onClick={onClose} className="p-3 hover:bg-primary transition-all"><X size={28}/></button>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 text-center">
-             <p className="text-xs font-black text-primary uppercase mb-1">{title}</p>
-             <p className="text-3xl font-black">{price.toLocaleString()} ₽</p>
-          </div>
-
-          <div className="space-y-4">
-            <p className="text-sm text-center text-muted-foreground">Для подтверждения оплаты нажмите кнопку ниже. Сумма будет списана с вашего баланса в Deep Blue.</p>
-            <div className="flex justify-between text-sm font-bold border-t pt-4">
-               <span className="text-muted-foreground">Ваш текущий баланс:</span>
-               <span className="text-primary">{user?.balance || 0} ₽</span>
+        <form onSubmit={handlePayment} className="p-12 space-y-12">
+            <div className="bg-white/5 p-10 border border-white/10 flex justify-between items-end relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
+                <div className="min-w-0">
+                   <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mb-2">ОБЪЕКТ ОПЛАТЫ</p>
+                   <p className="text-3xl font-black uppercase truncate text-white">{title}</p>
+                </div>
+                <p className="text-6xl font-black text-white tracking-tighter">{totalPrice.toLocaleString()} ₽</p>
             </div>
-          </div>
-
-          <div className="flex gap-4">
-            <Button type="button" variant="secondary" className="flex-1 h-12 font-bold" onClick={onClose}>Отмена</Button>
-            <Button type="submit" className="flex-1 h-12 font-bold shadow-lg shadow-primary/20">Оплатить</Button>
-          </div>
+            {errorMsg && <div className="p-6 bg-destructive text-white font-black uppercase text-sm text-center border-l-[12px] border-white/50 shadow-xl">{errorMsg}</div>}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                <div className="space-y-10">
+                    <h3 className="font-black uppercase tracking-[0.3em] text-primary border-l-4 border-primary pl-4">ИДЕНТИФИКАЦИЯ</h3>
+                    {type === 'room' && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <input required type="date" className="bg-white/5 border border-white/10 p-5 font-black uppercase text-xs" onChange={e => setCheckIn(e.target.value)} />
+                            <input required type="date" className="bg-white/5 border border-white/10 p-5 font-black uppercase text-xs" onChange={e => setCheckOut(e.target.value)} />
+                        </div>
+                    )}
+                    <input required className="w-full bg-white/5 border border-white/10 p-6 font-black uppercase text-base tracking-widest text-white outline-none" placeholder="ПАСПОРТ (10 ЦИФР)" value={passInput} onChange={e => setPassInput(e.target.value)} />
+                    <input required type="password" className="w-full bg-white/5 border border-white/10 p-6 font-black text-base text-white outline-none" placeholder="ПАРОЛЬ АККАУНТА" value={pinInput} onChange={e => setPinInput(e.target.value)} />
+                </div>
+                <div className="space-y-10">
+                    <h3 className="font-black uppercase tracking-[0.3em] text-primary border-l-4 border-primary pl-4">ДАННЫЕ КАРТЫ</h3>
+                    <div className="bg-black p-12 border border-white/10 space-y-10 relative overflow-hidden">
+                        <input required maxLength={16} className="w-full bg-transparent border-b-2 border-white/20 p-2 font-black text-3xl tracking-[0.2em] text-white outline-none focus:border-primary" placeholder="0000 0000 0000 0000" value={cardNum} onChange={e => setCardNum(e.target.value.replace(/\D/g, ''))} />
+                        <div className="grid grid-cols-2 gap-10">
+                            <input required maxLength={5} className="bg-transparent border-b-2 border-white/20 p-2 font-black text-center text-xl outline-none" placeholder="ММ/ГГ" value={cardExp} onChange={e => setCardExp(e.target.value)} />
+                            <input required maxLength={3} className="bg-transparent border-b-2 border-white/20 p-2 font-black text-center text-xl outline-none" placeholder="CVC" value={cardCvc} onChange={e => setCardCvc(e.target.value.replace(/\D/g, ''))} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" className="w-full py-12 bg-white text-black font-black text-3xl uppercase tracking-[0.5em] hover:bg-primary hover:text-white transition-all shadow-2xl active:scale-95">ПОДТВЕРДИТЬ ОПЛАТУ</button>
         </form>
       </div>
     </div>

@@ -8,22 +8,47 @@
     "password": "El1teHarp",
     "country": "Россия",
     "role": "admin",
-    "subRole": "admin",
+    "subRole": "администратор",
     "balance": 1000000,
     "history": [],
-    "services": []
+    "services": [],
+    "pcHours": 0,
+    "parkingSpots": [],
+    "massageSessions": []
   },
   {
-    "id": "1776784983019",
+    "id": "1776798178451",
     "balance": 0,
-    "history": [],
-    "services": [],
-    "role": "employee",
-    "fullName": "Виктория Сафонова Владимировна",
+    "history": [
+      {
+        "id": 1776798218879,
+        "date": "2026-04-21T19:03:38.878Z",
+        "item": "ОПЛАТА: БИЗНЕС",
+        "price": -34000
+      },
+      {
+        "id": 1776798218878,
+        "date": "2026-04-21T19:03:38.878Z",
+        "item": "ВНЕСЕНИЕ СРЕДСТВ (КАРТА)",
+        "price": 34000
+      }
+    ],
+    "services": [
+      "БАССЕЙН",
+      "ЗАВТРАК"
+    ],
+    "pcHours": 8,
+    "parkingSpots": [],
+    "massageSessions": [],
+    "fullName": "Сафонова Виктория Владимировна",
     "dob": "2006-07-25",
-    "passport": "7720 145678",
-    "email": "safonova@gmail.com",
+    "passport": "7720123456",
+    "email": "safonova@mail.ru",
     "password": "Sklob4201031!",
-    "country": "Россия"
+    "country": "Россия",
+    "room": {
+      "number": "343",
+      "type": "БИЗНЕС"
+    }
   }
 ]

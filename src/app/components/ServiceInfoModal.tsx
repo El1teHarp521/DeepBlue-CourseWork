@@ -1,48 +1,34 @@
-import { X } from 'lucide-react';
-import { Button } from './ui/button';
+import { X, Info } from 'lucide-react';
 
-interface ServiceInfoModalProps {
-  service: {
-    title: string;
-    description: string;
-    image: string;
-    price?: string;
-    details: string;
-  };
-  onClose: () => void;
-}
-
-export function ServiceInfoModal({ service, onClose }: ServiceInfoModalProps) {
+export function ServiceInfoModal({ service, onClose }: any) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div 
-        className="bg-card border border-border rounded-2xl overflow-hidden max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200" 
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative h-56">
-          <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
-          <button 
-            onClick={onClose} 
-            className="absolute top-3 right-3 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 text-white font-sans">
+      <div className="bg-[#0a0a0a] w-full max-w-2xl border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="p-8 bg-white/5 flex justify-between items-center border-b border-white/10">
+          <h2 className="font-black uppercase tracking-[0.4em] text-xl flex items-center gap-4">
+            <Info className="text-primary" /> ИНФОРМАЦИЯ
+          </h2>
+          <button onClick={onClose} className="p-2 hover:bg-primary"><X size={24}/></button>
         </div>
         
-        <div className="p-6 space-y-4">
-          <div className="flex justify-between items-start">
-            <h2 className="text-2xl font-bold text-foreground">{service.title}</h2>
-            <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold">
-              {service.price || 'Уточняйте цену'}
-            </div>
+        <div className="p-10 space-y-10">
+          <div className="h-64 w-full border border-white/10">
+            <img src={service.image} className="w-full h-full object-cover" alt="" />
           </div>
-          
-          <p className="text-foreground font-medium">{service.description}</p>
-          <p className="text-muted-foreground text-sm leading-relaxed">{service.details}</p>
-          
-          <Button onClick={onClose} className="w-full mt-2" variant="secondary">
-            Закрыть
-          </Button>
+
+          <div className="space-y-6">
+            <div className="flex justify-between items-end border-b border-white/10 pb-6">
+              <h3 className="text-4xl font-black uppercase tracking-tighter">{service.title}</h3>
+              <p className="text-2xl font-black text-primary uppercase">{service.price}</p>
+            </div>
+            <p className="text-sm font-bold uppercase tracking-widest leading-loose opacity-60">
+              {service.details}
+            </p>
+          </div>
+
+          <button onClick={onClose} className="w-full py-6 bg-white text-black font-black uppercase tracking-[0.4em] hover:bg-primary hover:text-white transition-all">
+            ЗАКРЫТЬ
+          </button>
         </div>
       </div>
     </div>
