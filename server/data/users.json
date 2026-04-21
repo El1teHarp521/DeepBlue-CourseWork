@@ -1,0 +1,29 @@
+[
+  {
+    "id": "admin-1",
+    "fullName": "Солоткин Артем Сергеевич",
+    "dob": "2006-11-01",
+    "passport": "N/A",
+    "email": "artemsolot.com@gmail.com",
+    "password": "El1teHarp",
+    "country": "Россия",
+    "role": "admin",
+    "subRole": "admin",
+    "balance": 1000000,
+    "history": [],
+    "services": []
+  },
+  {
+    "id": "1776784983019",
+    "balance": 0,
+    "history": [],
+    "services": [],
+    "role": "employee",
+    "fullName": "Виктория Сафонова Владимировна",
+    "dob": "2006-07-25",
+    "passport": "7720 145678",
+    "email": "safonova@gmail.com",
+    "password": "Sklob4201031!",
+    "country": "Россия"
+  }
+]
