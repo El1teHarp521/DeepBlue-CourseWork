@@ -39,22 +39,23 @@ export function HomePage() {
         setServices(data);
       }
     } catch (e) {
-      console.error("КРИТИЧЕСКАЯ ОШИБКА ПОДКЛЮЧЕНИЯ К БЭКЕНДУ");
+      console.error("ОШИБКА СИНХРОНИЗАЦИИ С БЭКЕНДОМ");
     }
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  },[]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white font-sans selection:bg-primary">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
       {/* HERO SECTION */}
-      <div className="relative h-[85vh] bg-cover bg-center flex items-center justify-center border-b border-white/10" style={{ backgroundImage: `url(${heroBg})` }}>
-        <div className="absolute inset-0 bg-black/70" />
-        <div className="relative z-10 text-center px-4 space-y-4">
+      <div className="relative h-[85vh] bg-cover bg-center flex items-center justify-center border-b border-border" style={{ backgroundImage: `url(${heroBg})` }}>
+        {/* Оверлей всегда черный, чтобы белый текст читался на картинке */}
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative z-10 text-center px-4 space-y-4 text-white">
           <h1 className="text-7xl md:text-[10rem] font-black uppercase tracking-tighter leading-none">DEEP BLUE</h1>
-          <p className="text-sm md:text-xl font-black uppercase tracking-[0.8em] opacity-60">ОТЕЛЬ И КУРОРТ</p>
+          <p className="text-sm md:text-xl font-black uppercase tracking-[0.8em] opacity-80">ОТЕЛЬ И КУРОРТ</p>
         </div>
       </div>
 
@@ -64,8 +65,8 @@ export function HomePage() {
         <section>
           <div className="flex items-center gap-10 mb-20">
             <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter">НОМЕРА</h2>
-            <div className="h-[2px] flex-1 bg-white/10" />
-            <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.5em] hidden md:block italic">SELECT YOUR STAY</p>
+            <div className="h-[2px] flex-1 bg-border" />
+            <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.5em] hidden md:block">ВЫБЕРИТЕ ВАШ ОТДЫХ</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -75,11 +76,11 @@ export function HomePage() {
                 title={room.title}
                 price={room.price}
                 image={ROOM_IMG[room.id] || roomStandard}
-                features={room.features || []}
+                features={room.features ||[]}
                 onClick={() => navigate(`/room/${room.id}`)}
               />
             )) : (
-              <p className="col-span-full text-center font-black opacity-20 uppercase tracking-widest py-20 border border-dashed border-white/10">
+              <p className="col-span-full text-center font-black opacity-20 uppercase tracking-widest py-20 border border-dashed border-border">
                 Загрузка данных с сервера...
               </p>
             )}
@@ -90,8 +91,8 @@ export function HomePage() {
         <section>
           <div className="flex items-center gap-10 mb-20">
             <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter">СЕРВИС</h2>
-            <div className="h-[2px] flex-1 bg-white/10" />
-            <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.5em] hidden md:block italic">PREMIUM EXPERIENCE</p>
+            <div className="h-[2px] flex-1 bg-border" />
+            <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.5em] hidden md:block">ПРЕМИАЛЬНЫЙ ОПЫТ</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -105,7 +106,7 @@ export function HomePage() {
                 onClick={() => navigate(`/service/${service.id}`)}
               />
             )) : (
-              <p className="col-span-full text-center font-black opacity-20 uppercase tracking-widest py-20 border border-dashed border-white/10">
+              <p className="col-span-full text-center font-black opacity-20 uppercase tracking-widest py-20 border border-dashed border-border">
                 Синхронизация услуг...
               </p>
             )}

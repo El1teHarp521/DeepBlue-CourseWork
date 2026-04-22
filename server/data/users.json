@@ -1,54 +1,38 @@
 [
   {
     "id": "admin-1",
-    "fullName": "Солоткин Артем Сергеевич",
+    "fullName": "СОЛОТКИН АРТЕМ СЕРГЕЕВИЧ",
     "dob": "2006-11-01",
     "passport": "N/A",
     "email": "artemsolot.com@gmail.com",
     "password": "El1teHarp",
-    "country": "Россия",
+    "country": "РОССИЯ",
     "role": "admin",
-    "subRole": "администратор",
+    "subRole": "АДМИНИСТРАТОР",
     "balance": 1000000,
     "history": [],
     "services": [],
     "pcHours": 0,
     "parkingSpots": [],
-    "massageSessions": []
+    "massageSessions": [],
+    "diningAccess": []
   },
   {
-    "id": "1776798178451",
-    "balance": 0,
-    "history": [
-      {
-        "id": 1776798218879,
-        "date": "2026-04-21T19:03:38.878Z",
-        "item": "ОПЛАТА: БИЗНЕС",
-        "price": -34000
-      },
-      {
-        "id": 1776798218878,
-        "date": "2026-04-21T19:03:38.878Z",
-        "item": "ВНЕСЕНИЕ СРЕДСТВ (КАРТА)",
-        "price": 34000
-      }
-    ],
-    "services": [
-      "БАССЕЙН",
-      "ЗАВТРАК"
-    ],
-    "pcHours": 8,
-    "parkingSpots": [],
-    "massageSessions": [],
-    "fullName": "Сафонова Виктория Владимировна",
-    "dob": "2006-07-25",
+    "id": "1776869239336",
+    "fullName": "САФОНОВА ВИКТОРИЯ ВЛАДИМИРОВНА",
+    "dob": "2026-04-23",
     "passport": "7720123456",
     "email": "safonova@mail.ru",
     "password": "Sklob4201031!",
-    "country": "Россия",
-    "room": {
-      "number": "343",
-      "type": "БИЗНЕС"
-    }
+    "country": "РОССИЯ",
+    "role": "employee",
+    "subRole": "официант",
+    "balance": 0,
+    "history": [],
+    "services": [],
+    "pcHours": 0,
+    "parkingSpots": [],
+    "massageSessions": [],
+    "diningAccess": []
   }
 ]

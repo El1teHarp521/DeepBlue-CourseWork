@@ -1,43 +1,86 @@
-@custom-variant dark (&:is(.dark *));
+@import "tailwindcss";
 
-:root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --card: #0a0a0a;
-  --card-foreground: #ffffff;
-  --primary: #1e40af;
-  --border: rgba(255, 255, 255, 0.1);
-  --radius: 0;
-}
-
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
   --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-border: var(--border);
+  --color-muted-foreground: var(--muted-foreground);
+  
   --radius-sm: 0;
   --radius-md: 0;
   --radius-lg: 0;
   --radius-xl: 0;
 }
 
+:root {
+  color-scheme: light;
+  --background: #f8fafc;
+  --foreground: #020817;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --border: #e2e8f0;
+  --muted-foreground: #64748b;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #18181b;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --border: #27272a;
+  --muted-foreground: #a1a1aa;
+}
+
+/* РЕЖИМ СЛАБОВИДЯЩИХ: */
+.accessibility-mode {
+  --background: #ffffff !important;
+  --foreground: #000000 !important;
+  --card: #ffffff !important;
+  --primary: #000000 !important;
+  --primary-foreground: #ffffff !important;
+  --border: #000000 !important;
+  --muted-foreground: #000000 !important;
+  font-size: 20px !important;
+}
+
+/* РЕЖИМ СЛАБОВИДЯЩИХ: */
+.dark.accessibility-mode {
+  --background: #000000 !important;
+  --foreground: #ffff00 !important;
+  --card: #000000 !important;
+  --primary: #ffff00 !important;
+  --primary-foreground: #000000 !important;
+  --border: #ffff00 !important;
+  --muted-foreground: #ffff00 !important;
+}
+
+.accessibility-mode * {
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-weight: 800 !important;
+  background-image: none !important;
+}
+
 @layer base {
   * {
     border-color: var(--border);
-    outline-color: rgba(30, 64, 175, 0.5);
     border-radius: 0 !important;
     font-style: normal !important;
   }
   
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased font-sans;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-black uppercase tracking-tighter;
-    font-style: normal !important;
+    @apply font-black tracking-tight;
   }
 }
